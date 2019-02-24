@@ -8,9 +8,12 @@
 
 #import "PopularMoviesViewController.h"
 #import "MovieTableViewCell.h"
-#import "APIKeys.h"
+#import "APITMDB.h"
+#import "MovieViewController.h"
 
-static NSString *kDelailsAboutFilm = @"detailsAboutFilm";
+static NSString *kDelailsAboutFilmSegueIdentifier = @"delailsAboutFilmSegueIdentifier";
+static NSString *kKVOOperationQueue = @"operations";
+static NSString *kDefaultPosterName = @"film";
 
 @interface PopularMoviesViewController ()
 
@@ -21,7 +24,7 @@ static NSString *kDelailsAboutFilm = @"detailsAboutFilm";
 
 @implementation PopularMoviesViewController
 
-
+// MARK: Controller lifecycle
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -31,30 +34,22 @@ static NSString *kDelailsAboutFilm = @"detailsAboutFilm";
     self.queue.qualityOfService = NSQualityOfServiceUserInitiated;
     self.films = [[NSMutableArray alloc] init];
     
-    for (NSUInteger page = 0; page < 5; page++) {
+    for (NSUInteger page = 0; page < 1; page++) {
+        __weak typeof(self) weakSelf = self;
         [self.queue addOperationWithBlock:^{
-            NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
-            NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[APIKeys popularFilmsFromPage:@(page + 1)]];
-            [request setHTTPMethod:@"GET"];
-            NSURLSessionDataTask *downloadTask = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-                if (!error) {
-                    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
-                    if (httpResponse.statusCode == 200) {
-                        NSDictionary *JSON = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
-                        if (JSON[@"results"] != nil) {
-                            for (NSDictionary *film in JSON[@"results"]) {
-                                [self.films addObject:film];
-                            }
-                        }
-                    } else if (httpResponse.statusCode == 401) {
-                        NSLog(@"Invalid API key: You must be granted a valid key.");
-                    } else {
-                        NSLog(@"The resource you requested could not be found.");
-                    }
-                }
-                
-            }];
-            [downloadTask resume];
+            typeof(self) strongSelf = weakSelf;
+            NSURLSessionDataTask *loadTask = [APITMDB makeRequestForPage:@(page + 1)
+                             completion:^(NSDictionary *JSONResults) {
+                                 if (JSONResults[kPopularFilms] != nil) {
+                                     for (NSDictionary *film in JSONResults[kPopularFilms]) {
+                                         [strongSelf.films addObject:film];
+                                     }
+                                     dispatch_async(dispatch_get_main_queue(), ^{
+                                         [self.tableView reloadData];
+                                         NSLog(@"Reload data");
+                                     });
+                                 }}];
+            [loadTask resume];
         }];
     }
     
@@ -62,22 +57,18 @@ static NSString *kDelailsAboutFilm = @"detailsAboutFilm";
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    [self.queue addObserver:self forKeyPath:@"operations" options:NSKeyValueObservingOptionNew context:nil];
+    [self.queue addObserver:self forKeyPath:kKVOOperationQueue options:NSKeyValueObservingOptionInitial context:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    [self.queue removeObserver:self forKeyPath:@"operations" context:nil];
+    [self.queue removeObserver:self forKeyPath:kKVOOperationQueue context:nil];
 }
 
 // MARK: TableViewDataSource
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    NSInteger filmsCount = 10;
-    if (self.films.count != 0) {
-        filmsCount = self.films.count;
-    }
-    return filmsCount;
+    return self.films.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -86,16 +77,14 @@ static NSString *kDelailsAboutFilm = @"detailsAboutFilm";
     if (nil != movieCell) {
         if (self.films.count > 0) {
             NSDictionary *film = self.films[indexPath.row];
-            dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-                NSString *posterName = film[@"poster_path"];
-                NSData *data = [NSData dataWithContentsOfURL:[APIKeys moviePosterWithPath:posterName]];
-                UIImage *filmPoster = [UIImage imageWithData:data];
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+                UIImage *moviePoster = [self getPosterWithName:film[kMoviePosterPath]];
                 dispatch_async(dispatch_get_main_queue(), ^(void){
-                    movieCell.filmPoster.image = filmPoster;
+                    movieCell.filmPoster.image = moviePoster;
                 });
             });
-            movieCell.filmTitle.text = film[@"original_title"];
-            movieCell.filmAvarateVote.text = [NSString stringWithFormat:@"Vote average: %@", film[@"vote_average"]];
+            movieCell.filmTitle.text = film[kMovieOriginalTitle];
+            movieCell.filmAvarateVote.text = [NSString stringWithFormat:@"Vote average: %@", film[kMovieVoteAvarage]];
         } else {
             UIImage *theImage = [UIImage imageNamed:@"film"];
             movieCell.filmPoster.image = theImage;
@@ -112,24 +101,51 @@ static NSString *kDelailsAboutFilm = @"detailsAboutFilm";
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     self.selectedFilm = indexPath;
-    [self performSegueWithIdentifier:kDelailsAboutFilm sender:self];
+    [self performSegueWithIdentifier:kDelailsAboutFilmSegueIdentifier sender:self];
 }
 
 // MARK: KVO
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
-    if (object == self.queue && [keyPath isEqualToString:@"operations"]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self.tableView reloadData];
-        });
+    if (object == self.queue && [keyPath isEqualToString:kKVOOperationQueue] && self.queue.operationCount == 0) {
+        
     }
 }
 
+// MARK: Segue
+
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    if (segue.identifier == kDelailsAboutFilm) {
-        
+    if ([segue.identifier isEqualToString:kDelailsAboutFilmSegueIdentifier] && self.selectedFilm != nil) {
+        MovieViewController *destinationVC = [segue destinationViewController];
+        destinationVC.movieId = self.films[self.selectedFilm.row][kMovieId];
+        destinationVC.movieOriginalTitle = self.films[self.selectedFilm.row][kMovieOriginalTitle];
+        destinationVC.moviePosterPath = self.films[self.selectedFilm.row][kMoviePosterPath];
     }
+}
+
+- (UIImage *)getPosterWithName:(NSString *)posterPath {
+    if (posterPath == nil) {
+        return [UIImage imageNamed:kDefaultPosterName];
+    }
+    
+    NSData *imageData = nil;
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsPath = [paths objectAtIndex:0]; //Get the docs directory
+    NSString *filePath = [documentsPath stringByAppendingPathComponent:posterPath];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    if (![fileManager fileExistsAtPath:filePath]){
+        imageData = [NSData dataWithContentsOfURL:[APITMDB moviePosterWithPath:posterPath]];
+        NSLog(@"Image loaded from server with name %@", posterPath);
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^(void){
+            [imageData writeToFile:filePath atomically:YES];
+        });
+    } else {
+        imageData = [NSData dataWithContentsOfFile:filePath];
+        NSLog(@"Image loaded by path %@", filePath);
+    }
+    return [UIImage imageWithData:imageData];
 }
 
 @end

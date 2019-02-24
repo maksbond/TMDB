@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7A13636522216D180011A3BA /* APIKeys.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A13636422216D180011A3BA /* APIKeys.m */; };
+		7A0ECEAB2221999000652229 /* MovieViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0ECEAA2221999000652229 /* MovieViewController.m */; };
+		7A0ECEAE2222ED1B00652229 /* CompanieCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0ECEAD2222ED1B00652229 /* CompanieCollectionViewCell.m */; };
+		7A13636522216D180011A3BA /* APITMDB.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A13636422216D180011A3BA /* APITMDB.m */; };
 		7A6E851322216071007FB1C6 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A6E851222216071007FB1C6 /* AppDelegate.m */; };
 		7A6E851622216071007FB1C6 /* PopularMoviesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A6E851522216071007FB1C6 /* PopularMoviesViewController.m */; };
 		7A6E851922216071007FB1C6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7A6E851722216071007FB1C6 /* Main.storyboard */; };
@@ -18,8 +20,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		7A13636322216D180011A3BA /* APIKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = APIKeys.h; sourceTree = "<group>"; };
-		7A13636422216D180011A3BA /* APIKeys.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = APIKeys.m; sourceTree = "<group>"; };
+		7A0ECEA92221999000652229 /* MovieViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MovieViewController.h; sourceTree = "<group>"; };
+		7A0ECEAA2221999000652229 /* MovieViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MovieViewController.m; sourceTree = "<group>"; };
+		7A0ECEAC2222ED1B00652229 /* CompanieCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CompanieCollectionViewCell.h; sourceTree = "<group>"; };
+		7A0ECEAD2222ED1B00652229 /* CompanieCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CompanieCollectionViewCell.m; sourceTree = "<group>"; };
+		7A13636322216D180011A3BA /* APITMDB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = APITMDB.h; sourceTree = "<group>"; };
+		7A13636422216D180011A3BA /* APITMDB.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = APITMDB.m; sourceTree = "<group>"; };
 		7A6E850E22216071007FB1C6 /* TMDB.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TMDB.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A6E851122216071007FB1C6 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		7A6E851222216071007FB1C6 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -45,6 +51,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7A0ECEA72221943200652229 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				7A13636322216D180011A3BA /* APITMDB.h */,
+				7A13636422216D180011A3BA /* APITMDB.m */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
+		7A0ECEA82221996A00652229 /* Movie */ = {
+			isa = PBXGroup;
+			children = (
+				7A0ECEA92221999000652229 /* MovieViewController.h */,
+				7A0ECEAA2221999000652229 /* MovieViewController.m */,
+				7A0ECEAC2222ED1B00652229 /* CompanieCollectionViewCell.h */,
+				7A0ECEAD2222ED1B00652229 /* CompanieCollectionViewCell.m */,
+			);
+			path = Movie;
+			sourceTree = "<group>";
+		};
 		7A6E850522216071007FB1C6 = {
 			isa = PBXGroup;
 			children = (
@@ -84,7 +110,9 @@
 		7A6E852B22216316007FB1C6 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				7A0ECEA72221943200652229 /* API */,
 				7A6E852C22216332007FB1C6 /* PopularMovies */,
+				7A0ECEA82221996A00652229 /* Movie */,
 				7A6E851122216071007FB1C6 /* AppDelegate.h */,
 				7A6E851222216071007FB1C6 /* AppDelegate.m */,
 				7A6E852022216073007FB1C6 /* main.m */,
@@ -99,8 +127,6 @@
 				7A6E851522216071007FB1C6 /* PopularMoviesViewController.m */,
 				7A6E8527222162A1007FB1C6 /* MovieTableViewCell.h */,
 				7A6E8528222162A1007FB1C6 /* MovieTableViewCell.m */,
-				7A13636322216D180011A3BA /* APIKeys.h */,
-				7A13636422216D180011A3BA /* APIKeys.m */,
 			);
 			path = PopularMovies;
 			sourceTree = "<group>";
@@ -175,9 +201,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A6E851622216071007FB1C6 /* PopularMoviesViewController.m in Sources */,
+				7A0ECEAB2221999000652229 /* MovieViewController.m in Sources */,
 				7A6E852122216073007FB1C6 /* main.m in Sources */,
+				7A0ECEAE2222ED1B00652229 /* CompanieCollectionViewCell.m in Sources */,
 				7A6E8529222162A1007FB1C6 /* MovieTableViewCell.m in Sources */,
-				7A13636522216D180011A3BA /* APIKeys.m in Sources */,
+				7A13636522216D180011A3BA /* APITMDB.m in Sources */,
 				7A6E851322216071007FB1C6 /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
